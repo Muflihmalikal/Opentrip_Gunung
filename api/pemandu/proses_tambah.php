@@ -2,10 +2,11 @@
 session_start();
 
 require __DIR__ . '/../includes/koneksi.php';
-$nama = trim($_POST['nama'] ?? '');
-$lisensi = trim($_POST['lisensi'] ?? '');
+
+$nama      = trim($_POST['nama'] ?? '');
+$lisensi   = trim($_POST['lisensi'] ?? '');
 $spesialis = trim($_POST['spesialis'] ?? '');
-$foto = trim($_POST['foto'] ?? '');
+$foto      = trim($_POST['foto'] ?? '');
 
 $errors = [];
 if ($nama === '') {
@@ -23,21 +24,28 @@ if (!empty($errors)) {
     header('Location: tambah.php');
     exit;
 }
-$stmt = $pdo->prepare(
-    "INSERT INTO pemandu (nama, lisensi, spesialis, foto) 
-     VALUES (:nama, :lisensi, :spesialis, :foto) 
-     RETURNING id"
-);
 
-$stmt->execute([
-    'nama'      => $nama,
-    'lisensi'   => $lisensi,
-    'spesialis' => $spesialis,
-    'foto'      => $foto,
-]);
+try {
+    $stmt = $pdo->prepare(
+        'INSERT INTO pemandu ("nama", "lisensi", "spesialis", "foto") 
+         VALUES (:nama, :lisensi, :spesialis, :foto) 
+         RETURNING id'
+    );
 
-$newId = $stmt->fetchColumn();
+    $stmt->execute([
+        'nama'      => $nama,
+        'lisensi'   => $lisensi,
+        'spesialis' => $spesialis,
+        'foto'      => $foto !== '' ? $foto : null,
+    ]);
 
-$_SESSION['flash'] = ['type' => 'success', 'pesan' => 'Data pemandu berhasil ditambahkan.'];
-header('Location: list.php');
-exit;
+    $newId = $stmt->fetchColumn();
+
+    $_SESSION['flash'] = ['type' => 'success', 'pesan' => 'Data pemandu berhasil ditambahkan.'];
+    header('Location: list.php');
+    exit;
+} catch (\PDOException $e) {
+    $_SESSION['flash'] = ['type' => 'error', 'pesan' => 'Gagal menyimpan ke database: ' . $e->getMessage()];
+    header('Location: tambah.php');
+    exit;
+}

@@ -3,13 +3,13 @@ session_start();
 
 require __DIR__ . '/../includes/koneksi.php';
 
-$judul = trim($_POST['judul'] ?? '');
+$judul      = trim($_POST['judul'] ?? '');
 $ketinggian = trim($_POST['ketinggian'] ?? '');
-$harga = $_POST['harga'] ?? '';
-$tanggal = trim($_POST['tanggal'] ?? '');
-$kuota = $_POST['kuota'] ?? '';
-$status = trim($_POST['status'] ?? 'Buka');
-$poster = trim($_POST['poster'] ?? '');
+$harga      = $_POST['harga'] ?? '';
+$tanggal    = trim($_POST['tanggal'] ?? '');
+$kuota      = $_POST['kuota'] ?? '';
+$status     = trim($_POST['status'] ?? 'Buka');
+$poster     = trim($_POST['poster'] ?? '');
 
 $errors = [];
 if ($judul === '') {
@@ -34,24 +34,30 @@ if (!empty($errors)) {
     exit;
 }
 
-$stmt = $pdo->prepare(
-    "INSERT INTO paket (judul, ketinggian, harga, tanggal, kuota, status, poster) 
-     VALUES (:judul, :ketinggian, :harga, :tanggal, :kuota, :status, :poster) 
-     RETURNING id"
-);
+try {
+    $stmt = $pdo->prepare(
+        'INSERT INTO paket ("judul", "ketinggian", "harga", "tanggal", "kuota", "status", "poster") 
+         VALUES (:judul, :ketinggian, :harga, :tanggal, :kuota, :status, :poster) 
+         RETURNING id'
+    );
 
-$stmt->execute([
-    'judul'      => $judul,
-    'ketinggian' => $ketinggian,
-    'harga'      => (float) $harga,
-    'tanggal'    => $tanggal,
-    'kuota'      => (int) $kuota,
-    'status'     => $status,
-    'poster'     => $poster,
-]);
+    $stmt->execute([
+        'judul'      => $judul,
+        'ketinggian' => $ketinggian,
+        'harga'      => (float) $harga,
+        'tanggal'    => $tanggal,
+        'kuota'      => (int) $kuota,
+        'status'     => $status,
+        'poster'     => $poster !== '' ? $poster : null,
+    ]);
 
-$newId = $stmt->fetchColumn();
+    $newId = $stmt->fetchColumn();
 
-$_SESSION['flash'] = ['type' => 'success', 'pesan' => 'Paket trip berhasil ditambahkan.'];
-header('Location: list.php');
-exit;
+    $_SESSION['flash'] = ['type' => 'success', 'pesan' => 'Paket trip berhasil ditambahkan.'];
+    header('Location: list.php');
+    exit;
+} catch (\PDOException $e) {
+    $_SESSION['flash'] = ['type' => 'error', 'pesan' => 'Gagal menyimpan ke database: ' . $e->getMessage()];
+    header('Location: tambah.php');
+    exit;
+}

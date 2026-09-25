@@ -1,9 +1,20 @@
 <?php
-$host = getenv('POSTGRES_HOST');
-$db   = getenv('POSTGRES_DATABASE');
-$user = getenv('POSTGRES_USER');
-$pass = getenv('POSTGRES_PASSWORD');
-$port = getenv('POSTGRES_PORT') ?: '6543';
+$dbUrl = $_ENV['POSTGRES_URL'] ?? $_SERVER['POSTGRES_URL'] ?? getenv('POSTGRES_URL');
+
+if ($dbUrl) {
+    $dbopts = parse_url($dbUrl);
+    $host = $dbopts['host'];
+    $port = $dbopts['port'] ?? '6543';
+    $user = $dbopts['user'];
+    $pass = $dbopts['pass'];
+    $db   = ltrim($dbopts['path'], '/');
+} else {
+    $host = $_ENV['POSTGRES_HOST'] ?? $_SERVER['POSTGRES_HOST'] ?? getenv('POSTGRES_HOST');
+    $db   = $_ENV['POSTGRES_DATABASE'] ?? $_SERVER['POSTGRES_DATABASE'] ?? getenv('POSTGRES_DATABASE');
+    $user = $_ENV['POSTGRES_USER'] ?? $_SERVER['POSTGRES_USER'] ?? getenv('POSTGRES_USER');
+    $pass = $_ENV['POSTGRES_PASSWORD'] ?? $_SERVER['POSTGRES_PASSWORD'] ?? getenv('POSTGRES_PASSWORD');
+    $port = $_ENV['POSTGRES_PORT'] ?? $_SERVER['POSTGRES_PORT'] ?? getenv('POSTGRES_PORT') ?: '6543';
+}
 
 $dsn = "pgsql:host={$host};port={$port};dbname={$db};sslmode=require";
 

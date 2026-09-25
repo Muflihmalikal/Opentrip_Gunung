@@ -5,7 +5,7 @@ $user = getenv('POSTGRES_USER');
 $pass = getenv('POSTGRES_PASSWORD');
 $port = getenv('POSTGRES_PORT') ?: '6543';
 
-$dsn = "pgsql:host=" . $host . ";port=" . $port . ";dbname=" . $db;
+$dsn = "pgsql:host={$host};port={$port};dbname={$db};sslmode=require";
 
 try {
     $pdo = new PDO($dsn, $user, $pass, [
